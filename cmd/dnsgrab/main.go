@@ -52,7 +52,7 @@ func (c *CLI) run() {
 
 	if c.hasResolversFile() {
 		resolvers, _ := c.readFileLines(c.Resolvers)
-		runner.Options.Resolvers = resolvers
+		runner.Options.Resolvers = append(resolvers, runner.Options.Resolvers...)
 	}
 
 	var targets []string
