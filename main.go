@@ -2,6 +2,8 @@ package dnsgrab
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"math/rand"
 	"net"
 	"sync"
@@ -112,7 +114,7 @@ func (r *Runner) worker(host string) (result Result) {
 	if isHostname(host) {
 		ips, err := resolveDomain(host, r.Options.Resolvers)
 		if err != nil {
-			// log.Printf("Failed to resolve domain %s: %v\n", host, err)
+			log.Printf("Failed to resolve domain %s: %v\n", host, err)
 			return
 		}
 
@@ -132,29 +134,31 @@ func (r *Runner) worker(host string) (result Result) {
 
 func resolveDomain(domain string, resolvers []string) ([]string, error) {
 	var ips []string
-	dialer := &net.Dialer{
-		Resolver: &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				dnsResolverProto := "udp"                             // Protocol to use for the DNS resolver
-				dnsResolverTimeoutMs := 5000                          // Timeout (ms) for the DNS resolver (optional)
-				dnsResolverIP := resolvers[rand.Intn(len(resolvers))] // Randomly choose a resolver from the list
-				d := net.Dialer{
-					Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
-				}
-				return d.DialContext(ctx, dnsResolverProto, dnsResolverIP)
-			},
-		},
+	dnsResolverProto := "udp"    // Protocol to use for the DNS resolver
+	dnsResolverTimeoutMs := 5000 // Timeout (ms) for the DNS resolver (optional)
+	var lastErr error            // Store the last error, if any
+	for _, dnsResolverIP := range resolvers {
+		d := net.Dialer{
+			Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
+		}
+		_, err := d.DialContext(context.Background(), dnsResolverProto, dnsResolverIP)
+		if err == nil {
+			// DNS resolution succeeded, use the resolved IP
+			ipAddrs, err := net.DefaultResolver.LookupIPAddr(context.Background(), domain)
+			if err != nil {
+				// log.Printf("Failed to resolve IP address for domain %s: %v\n", domain, err)
+				return ips, err
+			}
+			for _, ipAddr := range ipAddrs {
+				ips = append(ips, ipAddr.IP.String())
+			}
+			return ips, nil
+		}
+		lastErr = err // Store the error in case all resolvers fail
 	}
-	ipAddrs, err := dialer.Resolver.LookupIPAddr(context.Background(), domain)
-	if err != nil {
-		// log.Printf("Failed to resolve IP address for domain %s: %v\n", domain, err)
-		return ips, err
-	}
-	for _, ipAddr := range ipAddrs {
-		ips = append(ips, ipAddr.IP.String())
-	}
-	return ips, nil
+
+	errorMessage := fmt.Sprintf("Failed to resolve IP address for domain: %s", domain)
+	return ips, fmt.Errorf("%s: %w", errorMessage, lastErr)
 }
 
 func isDNSEnabled(ip string, timeout time.Duration) bool {
