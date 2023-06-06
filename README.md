@@ -2,7 +2,7 @@
 
 # dnsgrab
 
-A simple Go library and CLI tool for grabbing DNS servers from one or multiple hosts.
+This is a simple Go library and CLI tool that allows you to retrieve DNS servers from one or multiple hosts. When querying domains, the library incorporates a curated list of public resolvers from the [goresolvers](https://github.com/root4loot/goresolvers) library, expanding the available options for DNS resolution alongside the ability to provide your own custom resolvers using appropriate flags.
 
 ## Installation
 
