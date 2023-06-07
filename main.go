@@ -143,12 +143,20 @@ func resolveDomain(domain string, resolvers []string) ([]string, error) {
 		}
 		_, err := d.DialContext(context.Background(), dnsResolverProto, dnsResolverIP)
 		if err == nil {
-			// DNS resolution succeeded, use the resolved IP
-			ipAddrs, err := net.DefaultResolver.LookupIPAddr(context.Background(), domain)
+			// DNS resolution succeeded using the custom resolver, use the resolved IP
+			resolver := &net.Resolver{
+				PreferGo: true,
+				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+					return d.DialContext(ctx, dnsResolverProto, dnsResolverIP)
+				},
+			}
+
+			ipAddrs, err := resolver.LookupIPAddr(context.Background(), domain)
 			if err != nil {
 				// log.Printf("Failed to resolve IP address for domain %s: %v\n", domain, err)
 				return ips, err
 			}
+
 			for _, ipAddr := range ipAddrs {
 				ips = append(ips, ipAddr.IP.String())
 			}
