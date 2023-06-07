@@ -137,6 +137,20 @@ func resolveDomain(domain string, resolvers []string) ([]string, error) {
 	dnsResolverProto := "udp"    // Protocol to use for the DNS resolver
 	dnsResolverTimeoutMs := 5000 // Timeout (ms) for the DNS resolver (optional)
 	var lastErr error            // Store the last error, if any
+
+	// First, try resolving using the default resolver
+	ipAddrs, err := net.DefaultResolver.LookupIPAddr(context.Background(), domain)
+	if err == nil {
+		// DNS resolution succeeded using the default resolver, use the resolved IP
+		for _, ipAddr := range ipAddrs {
+			ips = append(ips, ipAddr.IP.String())
+		}
+		return ips, nil
+	}
+
+	lastErr = err // Store the error from the default resolver
+
+	// Next, try resolving using the custom resolvers
 	for _, dnsResolverIP := range resolvers {
 		d := net.Dialer{
 			Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
