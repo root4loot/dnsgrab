@@ -11,7 +11,7 @@ import (
 
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
-	"github.com/root4loot/goresolvers"
+	"github.com/root4loot/publicresolvers"
 )
 
 type Runner struct {
@@ -36,14 +36,14 @@ type Result struct {
 
 // DefaultOptions returns default options
 func DefaultOptions() *Options {
-	goresolvers, _ := goresolvers.FetchResolversTrusted()
+	publicresolvers, _ := publicresolvers.FetchResolversTrusted()
 
 	return &Options{
 		Concurrency: 10,
 		Timeout:     3,
 		Delay:       0,
 		DelayJitter: 0,
-		Resolvers:   goresolvers,
+		Resolvers:   publicresolvers,
 	}
 }
 
