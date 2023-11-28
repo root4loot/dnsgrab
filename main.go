@@ -3,14 +3,12 @@ package dnsgrab
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/gologger/levels"
+	"github.com/root4loot/goutils/log"
 	"github.com/root4loot/publicresolvers"
 )
 
@@ -34,6 +32,10 @@ type Result struct {
 	Host string
 }
 
+func init() {
+	log.Init("dnsgrab")
+}
+
 // DefaultOptions returns default options
 func DefaultOptions() *Options {
 	publicresolvers, _ := publicresolvers.FetchResolversTrusted()
@@ -44,6 +46,7 @@ func DefaultOptions() *Options {
 		Delay:       0,
 		DelayJitter: 0,
 		Resolvers:   publicresolvers,
+		Verbose:     false,
 	}
 }
 
@@ -85,7 +88,7 @@ func (r *Runner) MultipleStream(host ...string) {
 	defer close(r.Results)
 
 	if r.Options.Verbose {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
+		log.SetLevel(log.DebugLevel)
 	}
 
 	sem := make(chan struct{}, r.Options.Concurrency)
@@ -114,7 +117,7 @@ func (r *Runner) worker(host string) (result Result) {
 	if isHostname(host) {
 		ips, err := resolveDomain(host, r.Options.Resolvers)
 		if err != nil {
-			log.Printf("Failed to resolve domain %s: %v\n", host, err)
+			log.Warnf("Failed to resolve domain %s: %v", host, err)
 			return
 		}
 
@@ -167,7 +170,7 @@ func resolveDomain(domain string, resolvers []string) ([]string, error) {
 
 			ipAddrs, err := resolver.LookupIPAddr(context.Background(), domain)
 			if err != nil {
-				// log.Printf("Failed to resolve IP address for domain %s: %v\n", domain, err)
+				// log.Warnf("Failed to resolve IP address for domain %s: %v", domain, err)
 				return ips, err
 			}
 
