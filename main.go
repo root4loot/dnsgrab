@@ -53,6 +53,9 @@ func DefaultOptions() *Options {
 // NewRunner returns a new runner
 func NewRunner() *Runner {
 	options := DefaultOptions()
+	if options.Verbose {
+		log.SetLevel(log.DebugLevel)
+	}
 	return &Runner{
 		Results: make(chan Result),
 		Visited: make(map[string]bool),
@@ -62,49 +65,61 @@ func NewRunner() *Runner {
 
 // Single runs dnsgrab against a single host
 func Single(host string) (result Result) {
-	// fmt.Println("Running single", host)
 	r := NewRunner()
-	r.Options.Concurrency = 1
 	return r.worker(host)
 }
 
-// Multiple runs dnsgrab against multiple hosts
+// Multiple runs dnsgrab against multiple hosts with concurrency
 func Multiple(hosts []string) (results []Result) {
-	// fmt.Println("Running multiple", hosts)
 	r := NewRunner()
-	if r.Options.Concurrency > len(hosts) {
-		r.Options.Concurrency = len(hosts)
+	concurrency := r.Options.Concurrency
+	if concurrency > len(hosts) {
+		concurrency = len(hosts)
 	}
 
+	resultsChan := make(chan Result, len(hosts))
+	sem := make(chan struct{}, concurrency)
+	var wg sync.WaitGroup
+
 	for _, host := range hosts {
-		results = append(results, r.worker(host))
+		wg.Add(1)
+		sem <- struct{}{} // Acquire semaphore
+		go func(h string) {
+			defer wg.Done()
+			defer func() { <-sem }() // Release semaphore
+			resultsChan <- Single(h)
+			time.Sleep(time.Millisecond * 100) // make room for processing results
+		}(host)
+	}
+
+	wg.Wait()
+	close(resultsChan)
+
+	for result := range resultsChan {
+		results = append(results, result)
 	}
 	return
 }
 
 // MultipleStream runs dnsgrab against multiple hosts in async mode
-func (r *Runner) MultipleStream(host ...string) {
-	// fmt.Println("Running multiple stream", host)
+func (r *Runner) MultipleStream(hosts ...string) {
 	defer close(r.Results)
-
-	if r.Options.Verbose {
-		log.SetLevel(log.DebugLevel)
-	}
 
 	sem := make(chan struct{}, r.Options.Concurrency)
 	var wg sync.WaitGroup
-	for _, h := range host {
-		if !r.Visited[h] {
-			r.Visited[h] = true
+
+	for _, host := range hosts {
+		if !r.Visited[host] {
+			r.Visited[host] = true
 
 			sem <- struct{}{}
 			wg.Add(1)
-			go func(u string) {
+			go func(h string) {
 				defer func() { <-sem }()
 				defer wg.Done()
-				r.Results <- r.worker(u)
+				r.Results <- Single(h)
 				time.Sleep(time.Millisecond * 100) // make room for processing results
-			}(h)
+			}(host)
 			time.Sleep(r.getDelay() * time.Millisecond) // delay between requests
 		}
 	}
@@ -112,12 +127,10 @@ func (r *Runner) MultipleStream(host ...string) {
 }
 
 func (r *Runner) worker(host string) (result Result) {
-	// timeout := time.Duration(r.Options.Timeout) * time.Minute
-
 	if isHostname(host) {
 		ips, err := resolveDomain(host, r.Options.Resolvers)
 		if err != nil {
-			log.Warnf("Failed to resolve domain %s: %v", host, err)
+			log.Warn("Failed to resolve domain", host)
 			return
 		}
 
