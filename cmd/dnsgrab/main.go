@@ -9,10 +9,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/root4loot/dnsgrab"
-	"github.com/root4loot/dnsgrab/pkg/log"
-
-	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/gologger/levels"
+	"github.com/root4loot/goutils/log"
 )
 
 const author = "@danielantonsen"
@@ -72,12 +69,12 @@ func (c *CLI) run() {
 	if len(targets) <= c.Concurrency {
 		results := dnsgrab.Multiple(targets)
 		for _, result := range results {
-			if result.Host != "" {
+			if result.ResolverAddress != "" {
 				if !c.Silence {
-					fmt.Println(result.Host)
+					fmt.Println(result.ResolverAddress)
 				}
 				if c.hasOutfile() {
-					c.writeToFile(result.Host)
+					c.writeToFile(result.ResolverAddress)
 				}
 			}
 		}
@@ -90,12 +87,12 @@ func (c *CLI) run() {
 func (c *CLI) processResults(dnsgrab *dnsgrab.Runner) {
 	go func() {
 		for result := range dnsgrab.Results {
-			if result.Host != "" {
+			if result.ResolverAddress != "" {
 				if !c.Silence {
-					fmt.Println(result.Host)
+					fmt.Println(result.ResolverAddress)
 				}
 				if c.hasOutfile() {
-					c.writeToFile(result.Host)
+					c.writeToFile(result.ResolverAddress)
 				}
 			}
 		}
@@ -175,9 +172,11 @@ func (c *CLI) parseFlags() {
 
 func (c *CLI) setLogger() {
 	if c.Silence {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
+		log.SetLevel(log.PanicLevel)
 	} else if c.Verbose {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
 	}
 }
 
