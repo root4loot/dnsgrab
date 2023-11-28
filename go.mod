@@ -5,7 +5,7 @@ go 1.21.1
 require (
 	github.com/projectdiscovery/gologger v1.1.11
 	github.com/root4loot/goutils v0.0.0-20231128165748-a58b72948ab8
-	github.com/root4loot/publicresolvers v0.0.0-20230607064706-1a0199fb9a25
+	github.com/root4loot/publicresolvers v0.0.0-20231106161517-252960519ef3
 )
 
 require (

@@ -44,6 +44,8 @@ github.com/root4loot/goutils v0.0.0-20231128165748-a58b72948ab8 h1:ZyPoNa99YJiFt
 github.com/root4loot/goutils v0.0.0-20231128165748-a58b72948ab8/go.mod h1:tj7NJxGySm5Ld1VtfkbjH/1N/wr/9LNHlCxRu9prktA=
 github.com/root4loot/publicresolvers v0.0.0-20230607064706-1a0199fb9a25 h1:6zBpWpsBhHzF89vRcnFge30N6BqThNhh5hw6t5slfSo=
 github.com/root4loot/publicresolvers v0.0.0-20230607064706-1a0199fb9a25/go.mod h1:AIPuzk/pw2hqjeO0hkGF52HgM40k69Mp4A+7El/kSGE=
+github.com/root4loot/publicresolvers v0.0.0-20231106161517-252960519ef3 h1:ZDHnTfCM5ymepgr89dxQ50JnNjlgv2AeiG8iugGd4+4=
+github.com/root4loot/publicresolvers v0.0.0-20231106161517-252960519ef3/go.mod h1:AIPuzk/pw2hqjeO0hkGF52HgM40k69Mp4A+7El/kSGE=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

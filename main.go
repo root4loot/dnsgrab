@@ -38,7 +38,7 @@ func init() {
 
 // DefaultOptions returns default options
 func DefaultOptions() *Options {
-	publicresolvers, _ := publicresolvers.FetchResolversTrusted()
+	publicresolvers, _ := publicresolvers.FetchResolversTrustedWithPort()
 
 	return &Options{
 		Concurrency: 10,
