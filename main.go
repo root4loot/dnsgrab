@@ -29,7 +29,8 @@ type Options struct {
 }
 
 type Result struct {
-	Host string
+	ResolverAddress string
+	RequestedHost   string
 }
 
 func init() {
@@ -136,12 +137,12 @@ func (r *Runner) worker(host string) (result Result) {
 
 		for _, ip := range ips {
 			if isDNSEnabled(ip, time.Duration(r.Options.Timeout)*time.Second) {
-				return Result{Host: ip + ":53"}
+				return Result{RequestedHost: host, ResolverAddress: ip + ":53"}
 			}
 		}
 	} else {
 		if isDNSEnabled(host, time.Duration(r.Options.Timeout)*time.Second) {
-			return Result{Host: host + ":53"}
+			return Result{RequestedHost: host, ResolverAddress: host + ":53"}
 		}
 	}
 
